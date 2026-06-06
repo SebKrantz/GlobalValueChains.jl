@@ -1,5 +1,8 @@
 # ICIO.jl
 
+[![CI](https://github.com/SebKrantz/ICIO.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/SebKrantz/ICIO.jl/actions/workflows/CI.yml)
+[![Docs (dev)](https://img.shields.io/badge/docs-dev-blue.svg)](https://SebKrantz.github.io/ICIO.jl/dev/)
+
 Fast value-added and Global Value Chain (GVC) decompositions of Inter-Country Input-Output
 (ICIO) tables, following the **Borin & Mancini (2019)** framework implemented by the Stata
 [`icio`](https://www.tradeconomics.com/icio/) command (Belotti, Borin & Mancini, *Stata
