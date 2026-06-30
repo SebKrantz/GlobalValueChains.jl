@@ -1,8 +1,7 @@
 """
     GlobalValueChains
 
-Fast value-added and Global Value Chain (GVC) decompositions of Inter-Country Input-Output
-(ICIO) tables, following the Borin & Mancini (2019) framework implemented by the Stata `icio`
+Fast value-added and Global Value Chain (GVC) decompositions following the Borin & Mancini (2019) framework implemented by the Stata `icio`
 command (Belotti, Borin & Mancini 2021).
 
 Supports the full set of `icio` perspectives/approaches: exporter (source & sink), world
@@ -44,4 +43,4 @@ include("decompose_self.jl")
 include("imports.jl")
 include("output.jl")
 
-end # module ICIO
+end # module GlobalValueChains

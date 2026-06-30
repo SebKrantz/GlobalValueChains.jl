@@ -5,7 +5,7 @@ CurrentModule = GlobalValueChains
 # API reference
 
 ```@docs
-ICIO
+GlobalValueChains
 ```
 
 ## Loading a table
