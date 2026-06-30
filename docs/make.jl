@@ -4,7 +4,7 @@ using Documenter
 DocMeta.setdocmeta!(GlobalValueChains, :DocTestSetup, :(using GlobalValueChains); recursive = true)
 
 makedocs(
-    modules = [ICIO],
+    modules = [GlobalValueChains],
     authors = "Sebastian Krantz",
     sitename = "GlobalValueChains.jl",
     checkdocs = :exports,
