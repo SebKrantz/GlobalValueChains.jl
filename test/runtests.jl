@@ -107,9 +107,109 @@ approxcols(df, a, b; atol = 1e-7) = maximum(abs.(Float64.(df[!, a]) .- Float64.(
         @test nrow(d) == 2 * G
     end
 
+    # --- helpers reused below ---
+    identities(df) = all((
+        maximum(abs.(df.gexp .- (df.dc .+ df.fc))) < 1e-8,
+        maximum(abs.(df.dc .- (df.dva .+ df.ddc))) < 1e-8,
+        maximum(abs.(df.fc .- (df.fva .+ df.fdc))) < 1e-8))
+    nonneg(df, cols) = all(minimum(df[!, c]) > -1e-8 for c in cols)
+    byctry(df, cols) = sort(combine(groupby(df, :from_region),
+                                    (cols .=> sum .=> cols)...), :from_region)
+
+    @testset "world source/sink (country, 9 terms)" begin
+        wsk = decompose(m; perspective = :world, approach = :sink)
+        wso = decompose(m; perspective = :world, approach = :source)
+        src = decompose(m; perspective = :exporter, approach = :source)
+        for w in (wsk, wso)
+            @test ncol(w) == 1 + 9
+            @test identities(w)
+            @test nonneg(w, [:dva, :vax, :ref, :ddc, :fva, :fdc])
+            # domestic side + FC are perspective-invariant (== exporter/source)
+            for c in [:gexp, :dc, :dva, :vax, :ref, :ddc, :fc]
+                @test maximum(abs.(w[!, c] .- src[!, c])) < 1e-8
+            end
+        end
+        # world source & sink FVA differ by country but match in the world total (BM2019 §5.1)
+        @test abs(sum(wso.fva) - sum(wsk.fva)) < 1e-7
+        @test maximum(abs.(wso.fva .- wsk.fva)) > 1e-6      # genuinely different per country
+    end
+
+    @testset "exporter/sink sector & bilateral (FVA uniqueness, eq. 33–39)" begin
+        sks = decompose(m; level = :sector, approach = :sink)
+        sss = decompose(m; level = :sector, approach = :source)
+        skb = decompose(m; level = :bilateral, approach = :sink)
+        ssb = decompose(m; level = :bilateral, approach = :source)
+        sc  = sort(decompose(m; level = :country), :country)
+        @test ncol(sks) == 2 + 9
+        @test ncol(skb) == 3 + 10           # adds vaxim
+        @test identities(sks) && identities(skb)
+        @test nonneg(sks, [:dva, :vax, :ref, :ddc, :fva, :fdc])
+        @test nonneg(skb, [:dva, :vax, :vaxim, :ref, :ddc, :fva, :fdc])
+        # DC and FC are identical to the source breakdown at every cell (BM2019 §3.2)
+        @test maximum(abs.(sks.dc .- sss.dc)) < 1e-10
+        @test maximum(abs.(skb.fc .- ssb.fc)) < 1e-10
+        # anchor: summed over importers (& sectors) sink == source country (Σ_r FVAsink = Σ_r FVAsource)
+        aggs = byctry(sks, [:dva, :fva, :vax, :ref])
+        for c in [:dva, :fva, :vax, :ref]
+            @test maximum(abs.(aggs[!, c] .- sc[!, c])) < 1e-7
+        end
+        # bilateral sink: additivity to sector, and VAXIM nests DAVAX ⊆ VAXIM ⊆ VAX
+        aggb = byctry(skb, [:dva, :fva])
+        @test maximum(abs.(aggb.dva .- sc.dva)) < 1e-7
+        @test minimum(skb.vaxim .- ssb.davax) > -1e-9    # DAVAX ⊆ VAXIM
+        @test minimum(skb.vax .- skb.vaxim) > -1e-9      # VAXIM ⊆ VAX
+    end
+
+    @testset "self perimeter (sectexp / sectbil, 7 terms)" begin
+        se = decompose(m; level = :sector, perspective = :self)
+        sb = decompose(m; level = :bilateral, perspective = :self)
+        sss = decompose(m; level = :sector, approach = :source)
+        ssb = decompose(m; level = :bilateral, approach = :source)
+        skb = decompose(m; level = :bilateral, approach = :sink)
+        @test ncol(se) == 2 + 7 && ncol(sb) == 3 + 7
+        @test identities(se) && identities(sb)
+        @test nonneg(se, [:dva, :ddc, :fva, :fdc]) && nonneg(sb, [:dva, :ddc, :fva, :fdc])
+        # content is perimeter-invariant; DVA★/FVA★ dominate the country-perimeter measures (eq. 46)
+        @test maximum(abs.(se.dc .- sss.dc)) < 1e-10
+        @test minimum(sb.dva .- ssb.dva) > -1e-9
+        @test minimum(sb.dva .- skb.dva) > -1e-9
+        @test minimum(sb.fva .- ssb.fva) > -1e-9
+    end
+
+    @testset "imports (importer perspective, eq. 51)" begin
+        ic = decompose(m; flow = :imports)
+        ib = decompose(m; flow = :imports, level = :bilateral)
+        @test names(ic) == ["importer", "gimp", "va", "dc"]
+        @test names(ib) == ["importer", "origin", "va", "dc"]
+        @test maximum(abs.(ic.gimp .- (ic.va .+ ic.dc))) < 1e-8
+        @test all(ic.va .> -1e-8) && all(ic.dc .> -1e-8)
+        @test all(ib.va .> -1e-8) && all(ib.dc .> -1e-8)
+        # gross imports + world consistency: Σ_r imports == Σ exports
+        totexp = sum(decompose(m; level = :country).gexp)
+        @test abs(sum(ic.gimp) - totexp) < 1e-7
+        # by-origin VA/DC sum (over origins) to the country-level totals
+        aggi = sort(combine(groupby(ib, :importer), [:va, :dc] .=> sum .=> [:va, :dc]), :importer)
+        ics = sort(ic, :importer)
+        @test maximum(abs.(aggi.va .- ics.va)) < 1e-7
+        @test maximum(abs.(aggi.dc .- ics.dc)) < 1e-7
+    end
+
     @testset "option validation" begin
-        @test_throws ErrorException decompose(m; level = :sector,
-            perspective = :world, approach = :sink)
+        @test_throws ErrorException decompose(m; level = :sector, perspective = :world)
+        @test_throws ErrorException decompose(m; level = :bilateral, perspective = :world)
+        @test_throws ErrorException decompose(m; level = :country, perspective = :self)
+        @test_throws ErrorException decompose(m; flow = :imports, level = :sector)
+        @test_throws ErrorException decompose(m; flow = :nonsense)
         @test_throws ErrorException decompose(m; level = :nonsense)
+        @test_throws ErrorException decompose(m; level = :sector, approach = :nonsense)
+    end
+
+    @testset "multi-year batch with flow/approach" begin
+        m2 = load_icio(nothing, FD .* 1.1, T .* 0.9; regions = regions, sectors = sectors)
+        d = decompose(Dict(2020 => m, 2021 => m2); level = :bilateral, approach = :sink)
+        @test "year" in names(d) && "vaxim" in names(d)
+        @test nrow(d) == 2 * G * (G - 1) * N
+        di = decompose(Dict(2020 => m, 2021 => m2); flow = :imports)
+        @test sort(unique(di.year)) == [2020, 2021] && "gimp" in names(di)
     end
 end
