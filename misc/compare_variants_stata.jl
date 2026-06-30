@@ -67,3 +67,17 @@ compare("bilateral exporter/sink", "$(DATA_PREFIX)_GVC_BIL_SINK_SAMPLE_STATA.csv
 # 4) imports, importer perspective
 compare("imports importer", "$(DATA_PREFIX)_GVC_IMP_BM19_STATA.csv",
         decompose(m; flow = :imports), [:importer], [:gimp, :va, :dc])
+
+# 5) sector, self (sectexp) perimeter — 9 terms
+secs = decompose(m; level = :sector, perspective = :self)
+secs.from_sector = [SECIDX[s] for s in secs.from_sector]
+compare("sector self (sectexp)", "$(DATA_PREFIX)_GVC_SEC_SELF_BM19_STATA.csv",
+        secs, [:from_region, :from_sector], [:gexp, :dc, :dva, :vax, :ref, :ddc, :fc, :fva, :fdc])
+
+# 6) bilateral, self (sectbil) perimeter (sample) — 9 terms
+bils = filter(r -> r.from_region in EXPORTERS && r.to_region in IMPORTERS,
+              decompose(m; level = :bilateral, perspective = :self))
+bils.from_sector = [SECIDX[s] for s in bils.from_sector]
+compare("bilateral self (sectbil)", "$(DATA_PREFIX)_GVC_BIL_SELF_SAMPLE_STATA.csv",
+        bils, [:from_region, :from_sector, :to_region],
+        [:gexp, :dc, :dva, :vax, :ref, :ddc, :fc, :fva, :fdc])

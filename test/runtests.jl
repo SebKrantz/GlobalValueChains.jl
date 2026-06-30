@@ -160,20 +160,25 @@ approxcols(df, a, b; atol = 1e-7) = maximum(abs.(Float64.(df[!, a]) .- Float64.(
         @test minimum(skb.vax .- skb.vaxim) > -1e-9      # VAXIM ⊆ VAX
     end
 
-    @testset "self perimeter (sectexp / sectbil, 7 terms)" begin
+    @testset "self perimeter (sectexp / sectbil, 9 terms)" begin
         se = decompose(m; level = :sector, perspective = :self)
         sb = decompose(m; level = :bilateral, perspective = :self)
         sss = decompose(m; level = :sector, approach = :source)
         ssb = decompose(m; level = :bilateral, approach = :source)
         skb = decompose(m; level = :bilateral, approach = :sink)
-        @test ncol(se) == 2 + 7 && ncol(sb) == 3 + 7
+        @test ncol(se) == 2 + 9 && ncol(sb) == 3 + 9
         @test identities(se) && identities(sb)
-        @test nonneg(se, [:dva, :ddc, :fva, :fdc]) && nonneg(sb, [:dva, :ddc, :fva, :fdc])
+        @test maximum(abs.(se.dva .- (se.vax .+ se.ref))) < 1e-9        # DVA★ = VAX★ + REF★
+        @test maximum(abs.(sb.dva .- (sb.vax .+ sb.ref))) < 1e-9
+        @test nonneg(se, [:dva, :vax, :ref, :ddc, :fva, :fdc]) && nonneg(sb, [:dva, :vax, :ref, :ddc, :fva, :fdc])
         # content is perimeter-invariant; DVA★/FVA★ dominate the country-perimeter measures (eq. 46)
         @test maximum(abs.(se.dc .- sss.dc)) < 1e-10
         @test minimum(sb.dva .- ssb.dva) > -1e-9
         @test minimum(sb.dva .- skb.dva) > -1e-9
         @test minimum(sb.fva .- ssb.fva) > -1e-9
+        # reflection share is perimeter-invariant: VAX★/DVA★ == VAXsource/DVAsource
+        @test maximum(abs.(sb.vax ./ sb.dva .- ssb.vax ./ ssb.dva)) < 1e-9
+        @test maximum(abs.(se.vax ./ se.dva .- sss.vax ./ sss.dva)) < 1e-9
     end
 
     @testset "imports (importer perspective, eq. 51)" begin

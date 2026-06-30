@@ -150,10 +150,10 @@ tidy `DataFrame`. Mirrors the Stata `icio` command's perspectives and approaches
 | `:country`  | `:world`      | `:sink`         | 9     | world perimeter, corrected KWW (eq. 54) |
 | `:sector`   | `:exporter`   | `:source`       | 13    | country perimeter, sectoral breakdown |
 | `:sector`   | `:exporter`   | `:sink`         | 9     | gexp dc dva vax ref ddc fc fva fdc |
-| `:sector`   | `:self`       | —               | 7     | sectoral (sectexp) perimeter |
+| `:sector`   | `:self`       | —               | 9     | sectoral (sectexp) perimeter |
 | `:bilateral`| `:exporter`   | `:source`       | 13    | one row per exporter-sector × importer (r≠s) |
 | `:bilateral`| `:exporter`   | `:sink`         | 10    | adds `vaxim` (DVA absorbed by direct importer, eq. 39) |
-| `:bilateral`| `:self`       | —               | 7     | sectoral-bilateral (sectbil) perimeter |
+| `:bilateral`| `:self`       | —               | 9     | sectoral-bilateral (sectbil) perimeter |
 
 The `:source` approach records value added the first time it leaves country `s`'s border (suited
 to production-linkage / GVC analysis); `:sink` records it the last time (suited to final-demand

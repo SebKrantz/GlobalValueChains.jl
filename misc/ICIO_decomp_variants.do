@@ -169,4 +169,82 @@ foreach ci of global allctry {
 outsheet using "${csv_path}/${data}_GVC_IMP_BM19_STATA.csv", comma replace
 di "Saved EM_GVC_IMP_BM19_STATA.csv"
 
+* ---------------------------------------------------------------------------
+* 5) Sector-level, self (sectexp) perimeter  (9 terms: GEXP DC DVA VAX REF DDC FC FVA FDC)
+* ---------------------------------------------------------------------------
+clear
+set obs `=$nctry * $nsec'
+gen from_region = ""
+gen from_sector = .
+foreach v in gexp dc dva vax ref ddc fc fva fdc {
+    gen `v' = .
+}
+local blk = 0
+foreach ce of global allctry {
+    qui icio, exporter(`ce', all) perspective(sectexp) output(detailed)
+    mat res = r(detailed)                       // 9 rows x nsec cols
+    forvalues sct = 1/$nsec {
+        local row = `blk' * $nsec + `sct'
+        qui replace from_region = "`ce'" in `row'
+        qui replace from_sector = `sct' in `row'
+        qui replace gexp = res[1,`sct'] in `row'
+        qui replace dc   = res[2,`sct'] in `row'
+        qui replace dva  = res[3,`sct'] in `row'
+        qui replace vax  = res[4,`sct'] in `row'
+        qui replace ref  = res[5,`sct'] in `row'
+        qui replace ddc  = res[6,`sct'] in `row'
+        qui replace fc   = res[7,`sct'] in `row'
+        qui replace fva  = res[8,`sct'] in `row'
+        qui replace fdc  = res[9,`sct'] in `row'
+    }
+    local blk = `blk' + 1
+}
+outsheet using "${csv_path}/${data}_GVC_SEC_SELF_BM19_STATA.csv", comma replace
+di "Saved EM_GVC_SEC_SELF_BM19_STATA.csv"
+
+* ---------------------------------------------------------------------------
+* 6) Bilateral sector-level, self (sectbil) perimeter (9 terms), sample pairs
+*    row order: GEXP DC DVA VAX REF DDC FC FVA FDC
+* ---------------------------------------------------------------------------
+clear
+local npairs = 0
+foreach ci in $importers {
+    foreach ce in $exporters {
+        if "`ce'" != "`ci'" local npairs = `npairs' + 1
+    }
+}
+set obs `=`npairs' * $nsec'
+gen from_region = ""
+gen from_sector = .
+gen to_region = ""
+foreach v in gexp dc dva vax ref ddc fc fva fdc {
+    gen `v' = .
+}
+local iter = 0
+foreach ci in $importers {
+    foreach ce in $exporters {
+        if "`ce'" == "`ci'" continue
+        qui icio, exporter(`ce', all) importer(`ci') perspective(sectbil) output(detailed)
+        mat res = r(detailed)
+        local iter = `iter' + 1
+        forvalues sct = 1/$nsec {
+            local row = (`iter'-1)*$nsec + `sct'
+            qui replace from_region = "`ce'" in `row'
+            qui replace from_sector = `sct' in `row'
+            qui replace to_region = "`ci'" in `row'
+            qui replace gexp = res[1,`sct'] in `row'
+            qui replace dc   = res[2,`sct'] in `row'
+            qui replace dva  = res[3,`sct'] in `row'
+            qui replace vax  = res[4,`sct'] in `row'
+            qui replace ref  = res[5,`sct'] in `row'
+            qui replace ddc  = res[6,`sct'] in `row'
+            qui replace fc   = res[7,`sct'] in `row'
+            qui replace fva  = res[8,`sct'] in `row'
+            qui replace fdc  = res[9,`sct'] in `row'
+        }
+    }
+}
+outsheet using "${csv_path}/${data}_GVC_BIL_SELF_SAMPLE_STATA.csv", comma replace
+di "Saved EM_GVC_BIL_SELF_SAMPLE_STATA.csv"
+
 di "Done. Re-run misc/ICIO_decomp_variants.jl to diff."
