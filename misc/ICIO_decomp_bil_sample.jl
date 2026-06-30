@@ -1,4 +1,4 @@
-# Compare ICIO.jl bilateral-sector output against the Stata sample produced by
+# Compare GlobalValueChains.jl bilateral-sector output against the Stata sample produced by
 # misc/ICIO_decomp_bil_sample.do  ->  ${data}_GVC_BIL_SEC_SAMPLE.csv
 #
 # Data layout (same as misc/ICIO_decomp.jl):
@@ -6,10 +6,10 @@
 #   that contains ${data}_2015.csv, ${data}_countrylist.csv, etc.
 #
 # From the EMERGING project root (default relative path):
-#   julia --project=/path/to/ICIO.jl misc/ICIO_decomp_bil_sample.jl
+#   julia --project=/path/to/GlobalValueChains.jl misc/ICIO_decomp_bil_sample.jl
 # From anywhere (override data folder):
 #   export ICIO_DATA=/path/to/EMERGING_Broad_Sectors
-#   julia --project=/path/to/ICIO.jl misc/ICIO_decomp_bil_sample.jl
+#   julia --project=/path/to/GlobalValueChains.jl misc/ICIO_decomp_bil_sample.jl
 #
 # Run misc/ICIO_decomp_bil_sample.do first to generate the Stata reference CSV.
 
@@ -17,7 +17,7 @@ const PKG_ROOT = dirname(@__DIR__)
 
 import Pkg
 Pkg.activate(PKG_ROOT)
-using ICIO, CSV, DataFrames
+using GlobalValueChains, CSV, DataFrames
 
 # ---- paths & metadata (keep in sync with ICIO_decomp_bil_sample.do) ----
 const DATA_PREFIX = "EM"
@@ -41,7 +41,7 @@ refpath = joinpath(base, "$(DATA_PREFIX)_GVC_BIL_SEC_SAMPLE.csv")
 
 if !isfile(refpath)
     println("Reference not found: ", refpath)
-    println("Run the Stata script first:  do path/to/ICIO.jl/misc/ICIO_decomp_bil_sample.do")
+    println("Run the Stata script first:  do path/to/GlobalValueChains.jl/misc/ICIO_decomp_bil_sample.do")
     exit(0)
 end
 

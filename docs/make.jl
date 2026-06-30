@@ -1,15 +1,15 @@
-using ICIO
+using GlobalValueChains
 using Documenter
 
-DocMeta.setdocmeta!(ICIO, :DocTestSetup, :(using ICIO); recursive = true)
+DocMeta.setdocmeta!(GlobalValueChains, :DocTestSetup, :(using GlobalValueChains); recursive = true)
 
 makedocs(
     modules = [ICIO],
     authors = "Sebastian Krantz",
-    sitename = "ICIO.jl",
+    sitename = "GlobalValueChains.jl",
     checkdocs = :exports,
     format = Documenter.HTML(
-        canonical = "https://SebKrantz.github.io/ICIO.jl",
+        canonical = "https://SebKrantz.github.io/GlobalValueChains.jl",
         edit_link = "main",
         assets = String[],
     ),
@@ -20,6 +20,6 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/SebKrantz/ICIO.jl",
+    repo = "github.com/SebKrantz/GlobalValueChains.jl",
     devbranch = "main",
 )

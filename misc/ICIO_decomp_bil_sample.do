@@ -1,14 +1,14 @@
 *** Bilateral Sector-Level Decomposition — VALIDATION SAMPLE ***
 * Mirrors the third block of ICIO_decomp.do, but restricted to a handful of
 * exporter/importer pairs (and one year) so it runs in seconds. Produces a
-* reference file to compare against ICIO.jl's `decompose(m; level = :bilateral)`.
+* reference file to compare against GlobalValueChains.jl's `decompose(m; level = :bilateral)`.
 *
 * Data layout (same as misc/ICIO_decomp_bil_sample.jl):
 *   cd to the EMERGING project root (parent of ICIO_CSV/), or set global datadir below.
 *   Julia equivalent:  export ICIO_DATA=/path/to/EMERGING_Broad_Sectors
 *
-* From the EMERGING project root:  do path/to/ICIO.jl/misc/ICIO_decomp_bil_sample.do
-* Then compare:  julia --project=/path/to/ICIO.jl misc/ICIO_decomp_bil_sample.jl
+* From the EMERGING project root:  do path/to/GlobalValueChains.jl/misc/ICIO_decomp_bil_sample.do
+* Then compare:  julia --project=/path/to/GlobalValueChains.jl misc/ICIO_decomp_bil_sample.jl
 
 clear
 global data EM

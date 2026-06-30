@@ -1,14 +1,14 @@
-# READ-ONLY comparison of ICIO.jl against the Stata `icio` reference files produced by
+# READ-ONLY comparison of GlobalValueChains.jl against the Stata `icio` reference files produced by
 # misc/ICIO_decomp_variants.do. Computes each Julia decomposition in memory and diffs it
 # against the matching EM_GVC_*_STATA.csv. It WRITES NOTHING — no output files are created or
 # overwritten, so it cannot clobber the Stata references.
 #
 # Run from the EMERGING project root (or set ICIO_DATA):
-#   julia --project=/path/to/ICIO.jl misc/compare_variants_stata.jl
+#   julia --project=/path/to/GlobalValueChains.jl misc/compare_variants_stata.jl
 
 const PKG_ROOT = dirname(@__DIR__)
 import Pkg; Pkg.activate(PKG_ROOT)
-using ICIO, CSV, DataFrames
+using GlobalValueChains, CSV, DataFrames
 
 const DATA_PREFIX = "EM"
 const CSV_PATH = get(ENV, "ICIO_DATA", joinpath("ICIO_CSV", "EMERGING_Broad_Sectors"))

@@ -1,7 +1,7 @@
-# ICIO.jl
+# GlobalValueChains.jl
 
-[![CI](https://github.com/SebKrantz/ICIO.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/SebKrantz/ICIO.jl/actions/workflows/CI.yml)
-[![Docs (dev)](https://img.shields.io/badge/docs-dev-blue.svg)](https://SebKrantz.github.io/ICIO.jl/dev/)
+[![CI](https://github.com/SebKrantz/GlobalValueChains.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/SebKrantz/GlobalValueChains.jl/actions/workflows/CI.yml)
+[![Docs (dev)](https://img.shields.io/badge/docs-dev-blue.svg)](https://SebKrantz.github.io/GlobalValueChains.jl/dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Fast value-added and Global Value Chain (GVC) decompositions following the **Borin & Mancini (2019)** framework implemented by the Stata
@@ -12,7 +12,7 @@ The package precomputes the expensive shared matrices (notably the global Leonti
 **once** per table and then computes country-, sector-, and bilateral-sector-level
 decompositions vectorised across all exporters, sectors and destination pairs. Where the Stata
 workflow re-derives the Leontief inverse on every `icio` call — tens of thousands of calls for
-a full bilateral-sector run — ICIO.jl does the full bilateral-sector decomposition of a
+a full bilateral-sector run — GlobalValueChains.jl does the full bilateral-sector decomposition of a
 245-country × 18-sector table (≈1.08 million rows) in **well under a second** after the one-off
 setup.
 
@@ -20,13 +20,13 @@ setup.
 
 ```julia
 using Pkg
-Pkg.develop(path = "/path/to/ICIO.jl")   # not yet registered
+Pkg.develop(path = "/path/to/GlobalValueChains.jl")   # not yet registered
 ```
 
 ## Quick start
 
 ```julia
-using ICIO
+using GlobalValueChains
 
 # (a) from the icio CSV format: a headerless [T | FD] matrix + a country-list file
 m = read_icio_csv("EM_2015.csv", "EM_countrylist.csv"; sectors = ["AFF","MIN", ...])
@@ -67,7 +67,7 @@ decompose(years; level = :bilateral)
 
 ## The decompositions
 
-ICIO.jl covers the full set of `icio` perspectives and approaches via the `flow`, `level`,
+GlobalValueChains.jl covers the full set of `icio` perspectives and approaches via the `flow`, `level`,
 `perspective` and `approach` keywords:
 
 | `flow`     | `level`     | `perspective` / `approach`        | rows                                  | terms |
@@ -129,7 +129,7 @@ reflection share and pass the internal identities; a direct Stata diff is genera
 country) and satisfy the Borin-Mancini cross-engine identities to machine precision (summed over
 importers the **sink** DVA/FVA/VAX/REF equal the **source** country totals; world/source and
 world/sink FVA share the same world total; `davax ⊆ vaxim ⊆ vax`; imports `va + dc` = gross
-imports). Run `Pkg.test("ICIO")` for the identity/anchor checks on a synthetic table;
+imports). Run `Pkg.test("GlobalValueChains")` for the identity/anchor checks on a synthetic table;
 `misc/ICIO_decomp_variants.{jl,do}` regenerate the Stata references, and
 `misc/compare_variants_stata.jl` performs the head-to-head diff (read-only — it writes nothing).
 

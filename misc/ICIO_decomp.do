@@ -4,7 +4,7 @@
 *   cd to the EMERGING project root (parent of ICIO_CSV/), or set global datadir below.
 *   Julia equivalent:  export ICIO_DATA=/path/to/EMERGING_Broad_Sectors
 *
-* From the EMERGING project root:  do path/to/ICIO.jl/misc/ICIO_decomp.do
+* From the EMERGING project root:  do path/to/GlobalValueChains.jl/misc/ICIO_decomp.do
 * Or set global datadir before running (see Julia's ICIO_DATA).
 
 clear

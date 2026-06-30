@@ -1,4 +1,4 @@
-*** Stata `icio` reference outputs for the extended ICIO.jl decomposition variants ***
+*** Stata `icio` reference outputs for the extended GlobalValueChains.jl decomposition variants ***
 * Companion to misc/ICIO_decomp_variants.jl. Produces *_STATA.csv reference files for the new
 * perspectives/approaches so the Julia harness can diff against them (expect ~1e-7 agreement).
 *
@@ -9,9 +9,9 @@
 *   imports   importer perspective        -> EM_GVC_IMP_BM19_STATA.csv        (gimp va dc)
 *
 * Run from the EMERGING project root (parent of ICIO_CSV/):
-*   do path/to/ICIO.jl/misc/ICIO_decomp_variants.do
+*   do path/to/GlobalValueChains.jl/misc/ICIO_decomp_variants.do
 * Then re-run the Julia harness to diff:
-*   julia --project=/path/to/ICIO.jl misc/ICIO_decomp_variants.jl
+*   julia --project=/path/to/GlobalValueChains.jl misc/ICIO_decomp_variants.jl
 
 clear
 global data EM

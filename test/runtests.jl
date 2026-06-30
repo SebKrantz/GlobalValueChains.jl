@@ -1,4 +1,4 @@
-using ICIO
+using GlobalValueChains
 using DataFrames
 using Test
 using LinearAlgebra: I
@@ -19,7 +19,7 @@ end
 
 approxcols(df, a, b; atol = 1e-7) = maximum(abs.(Float64.(df[!, a]) .- Float64.(df[!, b]))) < atol
 
-@testset "ICIO.jl" begin
+@testset "GlobalValueChains.jl" begin
     T, FD, regions, sectors = toy_table(G = 4, N = 3)
     G, N = length(regions), length(sectors)
 
