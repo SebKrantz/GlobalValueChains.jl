@@ -23,6 +23,7 @@ decompose
 decompose_country
 decompose_sector
 decompose_bilateral
+decompose_imports
 ```
 
 ## Index

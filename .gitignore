@@ -30,3 +30,6 @@ JuliaLocalPreferences.toml
 
 # macOS
 .DS_Store
+
+# Stata editor swap files
+*.stswp

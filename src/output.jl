@@ -33,14 +33,33 @@ function _df_bilateral(m::ICIOModel, res::NamedTuple)
     return df
 end
 
+# imports, country level: one row per importing country
+function _df_imports_country(m::ICIOModel, nt::NamedTuple)
+    df = DataFrame(importer = m.regions)
+    for (name, v) in pairs(nt)
+        df[!, name] = v
+    end
+    return df
+end
+
+# imports, bilateral level: one row per (importer, value-added origin)
+function _df_imports_bilateral(m::ICIOModel, res::NamedTuple)
+    df = DataFrame(importer = m.regions[res.imp_r], origin = m.regions[res.ori_j])
+    for (name, v) in pairs(res.terms)
+        df[!, name] = v
+    end
+    return df
+end
+
 """
-    decompose(years::AbstractDict; level = :country, perspective = :exporter, approach = :source)
+    decompose(years::AbstractDict; flow = :exports, level = :country,
+              perspective = :exporter, approach = :source)
 
 Batch version: `years` maps a year (or any label) to an [`ICIOModel`](@ref). Runs the
 decomposition for each, prepends a `:year` column, and vertically concatenates the results
 (rows ordered by sorted year). Mirrors the `foreach y in \$years` loop of `ICIO_decomp.do`.
 """
-function decompose(years::AbstractDict; level::Symbol = :country,
+function decompose(years::AbstractDict; flow::Symbol = :exports, level::Symbol = :country,
                    perspective::Symbol = :exporter, approach::Symbol = :source)
     ks = collect(keys(years))
     try
@@ -50,7 +69,8 @@ function decompose(years::AbstractDict; level::Symbol = :country,
     end
     parts = DataFrame[]
     for y in ks
-        df = decompose(years[y]; level = level, perspective = perspective, approach = approach)
+        df = decompose(years[y]; flow = flow, level = level,
+                       perspective = perspective, approach = approach)
         insertcols!(df, 1, :year => fill(y, nrow(df)))
         push!(parts, df)
     end

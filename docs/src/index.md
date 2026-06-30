@@ -33,13 +33,19 @@ m = read_icio_csv("EM_2015.csv", "EM_countrylist.csv"; sectors = ["AFF", "MIN", 
 # (b) or directly from matrices (e.g. the VA / FD / T objects of an MRIO)
 m = load_icio(VA, FD, T; regions = iso3, sectors = sector_codes)
 
-# Country level — corrected KWW / Borin-Mancini (world perspective, sink approach), 9 terms
-decompose(m; level = :country, perspective = :world, approach = :sink)
+# Country level — exporter perspective, source approach, 13 terms (default)
+decompose(m)
 
-# Country / sector / bilateral level — exporter perspective, source approach, 13 terms
-decompose(m; level = :country)     # perspective = :exporter, approach = :source (defaults)
-decompose(m; level = :sector)
-decompose(m; level = :bilateral)
+# Country level — corrected KWW / Borin-Mancini (world perspective, sink approach), 9 terms
+decompose(m; perspective = :world, approach = :sink)
+
+# Sector / bilateral level, exporter perspective; choose source or sink allocation
+decompose(m; level = :sector)                          # source, 13 terms
+decompose(m; level = :bilateral, approach = :sink)     # sink, 10 terms (adds VAXIM)
+
+# Self (sectoral-bilateral) perimeter, and the importer-perspective import decomposition
+decompose(m; level = :bilateral, perspective = :self)  # sectbil, 7 terms
+decompose(m; flow = :imports)                          # imports by country
 ```
 
 Pass a `Dict` of `year => model` to [`decompose`](@ref) to process several tables at once and
@@ -47,17 +53,34 @@ stack the results with a `:year` column.
 
 ## The decompositions
 
-| `level`      | `perspective` / `approach`        | rows                                | terms |
-|--------------|-----------------------------------|-------------------------------------|-------|
-| `:country`   | `:world` / `:sink`                | one per exporter                    | 9     |
-| `:country`   | `:exporter` / `:source` (default) | one per exporter                    | 13    |
-| `:sector`    | `:exporter` / `:source`           | one per exporter-sector             | 13    |
-| `:bilateral` | `:exporter` / `:source`           | one per exporter-sector × importer  | 13    |
+The full set of supported `flow` / `level` / `perspective` / `approach` combinations (the
+columns of `icio`'s perspectives and approaches):
 
-Output is a tidy `DataFrame` of absolute values. The term columns are
-`gexp dc dva vax ref ddc fc fva fdc` (9 terms) plus `davax gvc gvcb gvcf` (13 terms), satisfying
-`gexp = dc + fc`, `dc = dva + ddc`, `fc = fva + fdc`, `dva = vax + ref`,
-`gvc = gvcb + gvcf = gexp − davax`, and `gvcb = fc + ddc`.
+| `flow`      | `level`      | `perspective` / `approach`        | rows                                | terms |
+|-------------|--------------|-----------------------------------|-------------------------------------|-------|
+| `:exports`  | `:country`   | `:exporter` / `:source` (default) | one per exporter                    | 13    |
+| `:exports`  | `:country`   | `:world` / `:source`              | one per exporter                    | 9     |
+| `:exports`  | `:country`   | `:world` / `:sink`                | one per exporter                    | 9     |
+| `:exports`  | `:sector`    | `:exporter` / `:source`           | one per exporter-sector             | 13    |
+| `:exports`  | `:sector`    | `:exporter` / `:sink`             | one per exporter-sector             | 9     |
+| `:exports`  | `:sector`    | `:self`                           | one per exporter-sector             | 7     |
+| `:exports`  | `:bilateral` | `:exporter` / `:source`           | one per exporter-sector × importer  | 13    |
+| `:exports`  | `:bilateral` | `:exporter` / `:sink`             | one per exporter-sector × importer  | 10    |
+| `:exports`  | `:bilateral` | `:self`                           | one per exporter-sector × importer  | 7     |
+| `:imports`  | `:country`   | `:importer`                       | one per importer                    | 3     |
+| `:imports`  | `:bilateral` | `:importer`                       | one per (importer, VA origin)       | 2     |
+
+The `:source` approach records value added the first time it leaves the exporter's border
+(suited to production-linkage / GVC analysis); `:sink` records it the last time (suited to
+final-demand analysis); the two coincide at the whole-country exporter perimeter. The `:self`
+perimeter draws the boundary at the export flow itself, giving the broader Johnson (2018) /
+Los et al. (2016) value-added (`DVA★ ⊇ DVAsource, DVAsink`). `:world` is country-level only.
+
+Output is a tidy `DataFrame` of absolute values. The export term columns are
+`gexp dc dva vax ref ddc fc fva fdc` (9 terms) plus `davax gvc gvcb gvcf` (13 terms) or `vaxim`
+(bilateral sink), satisfying `gexp = dc + fc`, `dc = dva + ddc`, `fc = fva + fdc`,
+`dva = vax + ref`, `gvc = gvcb + gvcf = gexp − davax`, and `gvcb = fc + ddc`. The import columns
+are `gimp va dc` with `gimp = va + dc`.
 
 | term | meaning |
 |------|---------|
@@ -67,16 +90,25 @@ Output is a tidy `DataFrame` of absolute values. The term columns are
 | `ddc` / `fdc` | domestic / foreign double counting |
 | `vax` | domestic VA absorbed abroad (Johnson-Noguera) |
 | `ref` | reflection (domestic VA returning home) |
-| `davax` | domestic VA directly absorbed by the importer |
+| `davax` | domestic VA directly absorbed by the importer (source approach) |
+| `vaxim` | domestic VA absorbed by the importer, incl. re-processing (sink approach; `davax ⊆ vaxim ⊆ vax`) |
 | `gvc` | GVC-related trade (crosses > 1 border) |
 | `gvcb` / `gvcf` | backward / forward GVC participation |
+| `gimp` | gross imports (`= va + dc`) |
+| `va` / `dc` | value added / double counting in imports (by origin at the bilateral level) |
 
 ## Validation
 
-The country-level world/sink decomposition reproduces the Stata `icio` output to ~1e-7 relative
-error; the source/exporter decomposition satisfies all the accounting identities above and is
-exactly additive (bilateral → sector → country). The R counterpart is the `bm()` function in the
-[`decompr`](https://github.com/bquast/decompr) package, which agrees with ICIO.jl to ~1e-13.
+Every variant has been diffed **directly against Stata `icio`** on the EMERGING 245×18 tables and
+agrees to ≈1e-6 relative (Stata's CSV output precision): world/sink and world/source (country),
+exporter/source and exporter/sink (sector and bilateral, including `vaxim`), and the
+importer-perspective imports. The decompositions are exactly additive (bilateral → sector →
+country) and satisfy the Borin-Mancini cross-engine identities to machine precision (summed over
+importers the sink DVA/FVA/VAX/REF equal the source country totals; world/source and world/sink
+FVA share the same world total; imports `va + dc` = gross imports). `misc/ICIO_decomp_variants.do`
+regenerates the Stata references and `misc/compare_variants_stata.jl` runs the read-only diff. The
+R counterpart is the `bm()` function in the [`decompr`](https://github.com/bquast/decompr) package,
+which agrees with ICIO.jl to ~1e-13.
 
 ## References
 

@@ -23,65 +23,6 @@ function _Wcol(m::ICIOModel)
 end
 
 # ---------------------------------------------------------------------------
-# World / sink foreign value added (Borin-Mancini 2019 eq. 54), country level.
-# FVA_sr = VBfor·DAE_sr (foreign VA directly absorbed by importer r)
-#        + V_r B_rs · (A_sr L_rr REX_r)  (importer r's own VA that r re-exports onward).
-# Summed over destinations r ≠ s. FDC = FC − FVA.
-# ---------------------------------------------------------------------------
-function _fva_world_sink(m::ICIOModel)
-    G, N, GN = m.G, m.N, m.GN
-    A, B, L, Vc, FD, VBfor = m.A, m.B, m.L, m.V, m.FD, m.VBfor
-    Wcol = _Wcol(m)
-
-    # Wrex_r = L_rr * REX_r,  REX_r = Σ_{j≠r} (FD[r,j] + A_rj Wcol[j])  (r's directly-absorbed re-exports)
-    Wrex = zeros(GN)
-    for r in 1:G
-        rrng = blockrange(r, N)
-        rex = zeros(N)
-        for j in 1:G
-            j == r && continue
-            jrng = blockrange(j, N)
-            rex .+= @view(FD[rrng, j]) .+ @view(A[rrng, jrng]) * @view(Wcol[jrng])
-        end
-        @view(Wrex[rrng]) .= @view(L[rrng, rrng]) * rex
-    end
-
-    fva = zeros(G)
-    @inbounds for s in 1:G
-        srng = blockrange(s, N)
-        acc = 0.0
-        for r in 1:G
-            r == s && continue
-            rrng = blockrange(r, N)
-            Asr = @view A[srng, rrng]
-            dae = @view(FD[srng, r]) .+ Asr * @view(Wcol[rrng])      # directly-absorbed exports s→r
-            # term A+B: foreign VA multiplier · directly-absorbed exports
-            for (k, n) in enumerate(srng)
-                acc += VBfor[n] * dae[k]
-            end
-            # term C: importer r's own VA in s's exports that r re-exports onward
-            AsrWrex = Asr * @view(Wrex[rrng])                        # N-vector (s-sectors)
-            vbr = transpose(@view(B[rrng, srng])) * @view(Vc[rrng])  # N-vector (s-sectors): Σ_{m∈r} V_m B[m, s·]
-            for k in 1:N
-                acc += vbr[k] * AsrWrex[k]
-            end
-        end
-        fva[s] = acc
-    end
-    return fva
-end
-
-# World / sink country decomposition (9 terms). Domestic side is perspective-invariant
-# (taken from the source decomposition); only FVA/FDC use the world/sink split.
-function _world_sink_country(m::ICIOModel)
-    sc = _source_country(m)   # gexp, dc, dva, vax, davax, ref, ddc, fc, fva, fdc, gvc, gvcb, gvcf
-    fva = _fva_world_sink(m)
-    fdc = sc.fc .- fva
-    return (gexp = sc.gexp, dc = sc.dc, dva = sc.dva, vax = sc.vax, ref = sc.ref,
-            ddc = sc.ddc, fc = sc.fc, fva = fva, fdc = fdc)
-end
-
-# ---------------------------------------------------------------------------
 # Source / exporter perspective, sector level (13 terms per country-sector)
 # ---------------------------------------------------------------------------
 function _source_sector(m::ICIOModel)
@@ -194,50 +135,112 @@ end
 # Public API
 # ---------------------------------------------------------------------------
 """
-    decompose(m::ICIOModel; level = :country, perspective = :exporter, approach = :source)
+    decompose(m::ICIOModel; flow = :exports, level = :country,
+              perspective = :exporter, approach = :source)
 
-Decompose gross exports into value-added / GVC components, returning a tidy `DataFrame`.
+Decompose gross trade into value-added / GVC components (Borin & Mancini 2019), returning a
+tidy `DataFrame`. Mirrors the Stata `icio` command's perspectives and approaches.
 
-* `level = :country`  — one row per exporting country.
-  - `perspective = :world,  approach = :sink`   → 9 terms (corrected KWW / Borin-Mancini).
-  - `perspective = :exporter, approach = :source` (default) → 13 terms.
-* `level = :sector`   — one row per exporting country-sector (`:exporter`/`:source`, 13 terms).
-* `level = :bilateral`— one row per exporter-sector × importer (`:exporter`/`:source`, 13 terms),
-  excluding own-country destinations.
+`flow = :exports` (default) decomposes exports:
 
-Columns are absolute values (same currency units as the table). See [`read_icio_csv`](@ref)
-and [`load_icio`](@ref) for constructing `m`, and [`decompose`](@ref) over a `Dict` of years
-for batch processing.
+| `level`     | `perspective` | `approach`      | terms | description |
+|:------------|:--------------|:----------------|:------|:------------|
+| `:country`  | `:exporter`   | `:source`(=sink)| 13    | gexp dc dva vax davax ref ddc fc fva fdc gvc gvcb gvcf |
+| `:country`  | `:world`      | `:source`       | 9     | world perimeter, FVA at first foreign crossing (eq. 52) |
+| `:country`  | `:world`      | `:sink`         | 9     | world perimeter, corrected KWW (eq. 54) |
+| `:sector`   | `:exporter`   | `:source`       | 13    | country perimeter, sectoral breakdown |
+| `:sector`   | `:exporter`   | `:sink`         | 9     | gexp dc dva vax ref ddc fc fva fdc |
+| `:sector`   | `:self`       | —               | 7     | sectoral (sectexp) perimeter |
+| `:bilateral`| `:exporter`   | `:source`       | 13    | one row per exporter-sector × importer (r≠s) |
+| `:bilateral`| `:exporter`   | `:sink`         | 10    | adds `vaxim` (DVA absorbed by direct importer, eq. 39) |
+| `:bilateral`| `:self`       | —               | 7     | sectoral-bilateral (sectbil) perimeter |
+
+The `:source` approach records value added the first time it leaves country `s`'s border (suited
+to production-linkage / GVC analysis); `:sink` records it the last time (suited to final-demand
+analysis). At the whole-country exporter perimeter the two coincide. The `:self` perimeter uses
+the broader Johnson (2018) / Los et al. (2016) value-added notion (`DVA★ ⊇ DVAsource, DVAsink`).
+`:world` is available at the country level only.
+
+`flow = :imports` decomposes a country's gross imports from the importer perspective (eq. 51):
+
+| `level`     | terms        | description |
+|:------------|:-------------|:------------|
+| `:country`  | gimp va dc   | one row per importer |
+| `:bilateral`| va dc        | one row per (importer, value-added origin); sums over origin to imports |
+
+Columns are absolute values (same currency units as the table). See [`read_icio_csv`](@ref) /
+[`load_icio`](@ref) to construct `m`, and [`decompose`](@ref) over a `Dict` of years for batches.
 """
-function decompose(m::ICIOModel; level::Symbol = :country,
+function decompose(m::ICIOModel; flow::Symbol = :exports, level::Symbol = :country,
                    perspective::Symbol = :exporter, approach::Symbol = :source)
+    flow === :imports && return _decompose_imports(m, level, perspective)
+    flow === :exports || error("flow must be :exports or :imports; got :$flow.")
     if level === :country
-        if perspective === :world && approach === :sink
-            return _df_country(m, _world_sink_country(m))
-        elseif perspective === :exporter && approach === :source
-            return _df_country(m, _source_country(m))
+        if perspective === :world
+            (approach === :sink || approach === :source) ||
+                error("level=:country, perspective=:world requires approach=:sink or :source.")
+            return _df_country(m, _world_country(m, approach))
+        elseif perspective === :exporter
+            return _df_country(m, _source_country(m))  # source ≡ sink at the country perimeter
         else
-            error("level=:country supports (perspective=:world, approach=:sink) or " *
-                  "(perspective=:exporter, approach=:source); got " *
-                  "(perspective=:$perspective, approach=:$approach).")
+            error("flow=:exports, level=:country supports perspective=:exporter or :world; " *
+                  "got perspective=:$perspective (:self/:world-bilateral are not country-level).")
         end
     elseif level === :sector
-        (perspective === :exporter && approach === :source) ||
-            error("level=:sector requires perspective=:exporter, approach=:source.")
-        return _df_sector(m, _source_sector(m))
+        if perspective === :exporter
+            approach === :source && return _df_sector(m, _source_sector(m))
+            approach === :sink   && return _df_sector(m, _sink_sector(m))
+            error("approach must be :source or :sink; got :$approach.")
+        elseif perspective === :self
+            return _df_sector(m, _self_sector(m))
+        else
+            error("flow=:exports, level=:sector supports perspective=:exporter " *
+                  "(approach :source/:sink) or :self; :world is country-only.")
+        end
     elseif level === :bilateral
-        (perspective === :exporter && approach === :source) ||
-            error("level=:bilateral requires perspective=:exporter, approach=:source.")
-        return _df_bilateral(m, _source_bilateral(m))
+        if perspective === :exporter
+            approach === :source && return _df_bilateral(m, _source_bilateral(m))
+            approach === :sink   && return _df_bilateral(m, _sink_bilateral(m))
+            error("approach must be :source or :sink; got :$approach.")
+        elseif perspective === :self
+            return _df_bilateral(m, _self_bilateral(m))
+        else
+            error("flow=:exports, level=:bilateral supports perspective=:exporter " *
+                  "(approach :source/:sink) or :self; :world is country-only.")
+        end
     else
         error("level must be :country, :sector or :bilateral; got :$level.")
     end
 end
 
-"Convenience wrapper: `decompose(m; level=:country, …)`."
+# imports router (perspective :importer; approach not applicable)
+function _decompose_imports(m::ICIOModel, level::Symbol, perspective::Symbol)
+    perspective === :self &&
+        error("flow=:imports, sectoral-importer (sectimp) perspective is not yet implemented.")
+    # :exporter is the global default; for imports the only perimeter is the importer's border
+    (perspective === :importer || perspective === :exporter) ||
+        error("flow=:imports supports perspective=:importer; got perspective=:$perspective.")
+    if level === :country
+        return _df_imports_country(m, _imports_country(m))
+    elseif level === :bilateral
+        return _df_imports_bilateral(m, _imports_bilateral(m))
+    elseif level === :sector
+        error("flow=:imports, level=:sector (sectoral imports) is not yet implemented; " *
+              "use level=:country or :bilateral.")
+    else
+        error("flow=:imports supports level=:country or :bilateral; got :$level.")
+    end
+end
+
+"Convenience wrapper for [`decompose`](@ref) at `level=:country`."
 decompose_country(m::ICIOModel; perspective = :world, approach = :sink) =
     decompose(m; level = :country, perspective = perspective, approach = approach)
-"Convenience wrapper: `decompose(m; level=:sector)`."
-decompose_sector(m::ICIOModel) = decompose(m; level = :sector)
-"Convenience wrapper: `decompose(m; level=:bilateral)`."
-decompose_bilateral(m::ICIOModel) = decompose(m; level = :bilateral)
+"Convenience wrapper for [`decompose`](@ref) at `level=:sector`."
+decompose_sector(m::ICIOModel; perspective = :exporter, approach = :source) =
+    decompose(m; level = :sector, perspective = perspective, approach = approach)
+"Convenience wrapper for [`decompose`](@ref) at `level=:bilateral`."
+decompose_bilateral(m::ICIOModel; perspective = :exporter, approach = :source) =
+    decompose(m; level = :bilateral, perspective = perspective, approach = approach)
+"Convenience wrapper for the import decomposition (`flow=:imports`)."
+decompose_imports(m::ICIOModel; level = :country) =
+    decompose(m; flow = :imports, level = level, perspective = :importer)

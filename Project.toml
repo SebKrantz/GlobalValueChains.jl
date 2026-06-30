@@ -1,7 +1,7 @@
 name = "ICIO"
 uuid = "a66a5f9e-45e0-42ef-b84e-3dbef45667d3"
 authors = ["Sebastian Krantz"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
