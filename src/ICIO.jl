@@ -1,5 +1,5 @@
 """
-    ICIO
+    GlobalValueChains
 
 Fast value-added and Global Value Chain (GVC) decompositions of Inter-Country Input-Output
 (ICIO) tables, following the Borin & Mancini (2019) framework implemented by the Stata `icio`
@@ -12,7 +12,7 @@ and bilateral levels, plus the importer-perspective decomposition of gross impor
 Workflow:
 
 ```julia
-using ICIO
+using GlobalValueChains
 m = read_icio_csv("EM_2015.csv", "EM_countrylist.csv")   # or load_icio(VA, FD, T; regions, sectors)
 decompose(m)                                                       # 13-term exporter/source, by country
 decompose(m; perspective = :world, approach = :sink)              # 9-term corrected KWW
@@ -25,7 +25,7 @@ decompose(m; flow = :imports)                                     # importer-per
 See [`decompose`](@ref) for the complete table of supported `flow`/`level`/`perspective`/`approach`
 combinations.
 """
-module ICIO
+module GlobalValueChains
 
 using LinearAlgebra
 using DataFrames

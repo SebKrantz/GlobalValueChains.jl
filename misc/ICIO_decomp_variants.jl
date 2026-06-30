@@ -13,7 +13,7 @@
 const PKG_ROOT = dirname(@__DIR__)
 import Pkg
 Pkg.activate(PKG_ROOT)
-using ICIO, CSV, DataFrames
+using GlobalValueChains, CSV, DataFrames
 using Printf
 
 const DATA_PREFIX = "EM"

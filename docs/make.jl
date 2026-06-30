@@ -1,7 +1,7 @@
-using ICIO
+using GlobalValueChains
 using Documenter
 
-DocMeta.setdocmeta!(ICIO, :DocTestSetup, :(using ICIO); recursive = true)
+DocMeta.setdocmeta!(GlobalValueChains, :DocTestSetup, :(using GlobalValueChains); recursive = true)
 
 makedocs(
     modules = [ICIO],

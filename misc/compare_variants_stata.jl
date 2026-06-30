@@ -8,7 +8,7 @@
 
 const PKG_ROOT = dirname(@__DIR__)
 import Pkg; Pkg.activate(PKG_ROOT)
-using ICIO, CSV, DataFrames
+using GlobalValueChains, CSV, DataFrames
 
 const DATA_PREFIX = "EM"
 const CSV_PATH = get(ENV, "ICIO_DATA", joinpath("ICIO_CSV", "EMERGING_Broad_Sectors"))

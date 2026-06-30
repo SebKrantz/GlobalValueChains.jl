@@ -1,4 +1,4 @@
-using ICIO
+using GlobalValueChains
 using DataFrames
 using Test
 using LinearAlgebra: I

@@ -1,4 +1,4 @@
-name = "ICIO"
+name = "GlobalValueChains"
 uuid = "a66a5f9e-45e0-42ef-b84e-3dbef45667d3"
 authors = ["Sebastian Krantz"]
 version = "0.2.0"

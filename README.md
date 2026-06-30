@@ -26,7 +26,7 @@ Pkg.develop(path = "/path/to/GlobalValueChains.jl")   # not yet registered
 ## Quick start
 
 ```julia
-using ICIO
+using GlobalValueChains
 
 # (a) from the icio CSV format: a headerless [T | FD] matrix + a country-list file
 m = read_icio_csv("EM_2015.csv", "EM_countrylist.csv"; sectors = ["AFF","MIN", ...])
@@ -129,7 +129,7 @@ reflection share and pass the internal identities; a direct Stata diff is genera
 country) and satisfy the Borin-Mancini cross-engine identities to machine precision (summed over
 importers the **sink** DVA/FVA/VAX/REF equal the **source** country totals; world/source and
 world/sink FVA share the same world total; `davax ⊆ vaxim ⊆ vax`; imports `va + dc` = gross
-imports). Run `Pkg.test("ICIO")` for the identity/anchor checks on a synthetic table;
+imports). Run `Pkg.test("GlobalValueChains")` for the identity/anchor checks on a synthetic table;
 `misc/ICIO_decomp_variants.{jl,do}` regenerate the Stata references, and
 `misc/compare_variants_stata.jl` performs the head-to-head diff (read-only — it writes nothing).
 

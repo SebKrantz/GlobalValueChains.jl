@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = ICIO
+CurrentModule = GlobalValueChains
 ```
 
 # GlobalValueChains.jl
@@ -18,13 +18,13 @@ completes in well under a second after the one-off setup.
 
 ```julia
 using Pkg
-Pkg.add("ICIO")          # once registered; until then: Pkg.develop(url = "https://github.com/SebKrantz/GlobalValueChains.jl")
+Pkg.add("GlobalValueChains")          # once registered; until then: Pkg.develop(url = "https://github.com/SebKrantz/GlobalValueChains.jl")
 ```
 
 ## Quick start
 
 ```julia
-using ICIO
+using GlobalValueChains
 
 # (a) from the icio CSV format: a headerless [T | FD] matrix + a country-list file
 m = read_icio_csv("EM_2015.csv", "EM_countrylist.csv"; sectors = ["AFF", "MIN", ...])

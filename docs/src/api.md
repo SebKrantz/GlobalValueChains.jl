@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = ICIO
+CurrentModule = GlobalValueChains
 ```
 
 # API reference

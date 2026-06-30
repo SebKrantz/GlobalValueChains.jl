@@ -1,6 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-ICIO = "a66a5f9e-45e0-42ef-b84e-3dbef45667d3"
+GlobalValueChains = "a66a5f9e-45e0-42ef-b84e-3dbef45667d3"
 
 [compat]
 Documenter = "1"
