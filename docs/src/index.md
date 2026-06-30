@@ -63,10 +63,10 @@ columns of `icio`'s perspectives and approaches):
 | `:exports`  | `:country`   | `:world` / `:sink`                | one per exporter                    | 9     |
 | `:exports`  | `:sector`    | `:exporter` / `:source`           | one per exporter-sector             | 13    |
 | `:exports`  | `:sector`    | `:exporter` / `:sink`             | one per exporter-sector             | 9     |
-| `:exports`  | `:sector`    | `:self`                           | one per exporter-sector             | 7     |
+| `:exports`  | `:sector`    | `:self`                           | one per exporter-sector             | 9     |
 | `:exports`  | `:bilateral` | `:exporter` / `:source`           | one per exporter-sector × importer  | 13    |
 | `:exports`  | `:bilateral` | `:exporter` / `:sink`             | one per exporter-sector × importer  | 10    |
-| `:exports`  | `:bilateral` | `:self`                           | one per exporter-sector × importer  | 7     |
+| `:exports`  | `:bilateral` | `:self`                           | one per exporter-sector × importer  | 9     |
 | `:imports`  | `:country`   | `:importer`                       | one per importer                    | 3     |
 | `:imports`  | `:bilateral` | `:importer`                       | one per (importer, VA origin)       | 2     |
 
