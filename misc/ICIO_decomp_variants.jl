@@ -1,4 +1,4 @@
-# Validation harness for the extended Borin-Mancini decomposition variants added in ICIO.jl
+# Validation harness for the extended Borin-Mancini decomposition variants added in GlobalValueChains.jl
 # v0.2.0 (world source/sink, exporter sink, self perimeter, imports).
 #
 # It (1) runs every new variant on a real EMERGING table, (2) asserts the BM2019 accounting
@@ -8,7 +8,7 @@
 # produced by misc/ICIO_decomp_variants.do.
 #
 # Run from the EMERGING project root (parent of ICIO_CSV/), or set ICIO_DATA:
-#   julia --project=/path/to/ICIO.jl misc/ICIO_decomp_variants.jl
+#   julia --project=/path/to/GlobalValueChains.jl misc/ICIO_decomp_variants.jl
 
 const PKG_ROOT = dirname(@__DIR__)
 import Pkg

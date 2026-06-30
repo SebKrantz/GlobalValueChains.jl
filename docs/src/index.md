@@ -2,10 +2,9 @@
 CurrentModule = ICIO
 ```
 
-# ICIO.jl
+# GlobalValueChains.jl
 
-Fast value-added and Global Value Chain (GVC) decompositions of Inter-Country Input-Output
-(ICIO) tables, following the **Borin & Mancini (2019)** framework implemented by the Stata
+Fast value-added and Global Value Chain (GVC) decompositions following the **Borin & Mancini (2019)** framework implemented by the Stata
 [`icio`](https://www.tradeconomics.com/icio/) command (Belotti, Borin & Mancini, *Stata
 Journal* 2021).
 
@@ -19,7 +18,7 @@ completes in well under a second after the one-off setup.
 
 ```julia
 using Pkg
-Pkg.add("ICIO")          # once registered; until then: Pkg.develop(url = "https://github.com/SebKrantz/ICIO.jl")
+Pkg.add("ICIO")          # once registered; until then: Pkg.develop(url = "https://github.com/SebKrantz/GlobalValueChains.jl")
 ```
 
 ## Quick start
@@ -108,7 +107,7 @@ importers the sink DVA/FVA/VAX/REF equal the source country totals; world/source
 FVA share the same world total; imports `va + dc` = gross imports). `misc/ICIO_decomp_variants.do`
 regenerates the Stata references and `misc/compare_variants_stata.jl` runs the read-only diff. The
 R counterpart is the `bm()` function in the [`decompr`](https://github.com/bquast/decompr) package,
-which agrees with ICIO.jl to ~1e-13.
+which agrees with GlobalValueChains.jl to ~1e-13.
 
 ## References
 

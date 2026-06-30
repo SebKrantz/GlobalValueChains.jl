@@ -1,4 +1,4 @@
-# GVC decompositions of the EMERGING ICIO tables — full Julia/ICIO.jl pipeline.
+# GVC decompositions of the EMERGING ICIO tables — full Julia/GlobalValueChains.jl pipeline.
 #
 # Julia replacement for ICIO_decomp.do. Runs all three decompositions and writes the same
 # three output files. Each yearly table is read and inverted ONCE, then all three
@@ -13,10 +13,10 @@
 #   that contains ${data}_2015.csv, ${data}_countrylist.csv, etc.
 #
 # From the EMERGING project root (default relative path):
-#   julia --project=/path/to/ICIO.jl misc/ICIO_decomp.jl
+#   julia --project=/path/to/GlobalValueChains.jl misc/ICIO_decomp.jl
 # From anywhere (override data folder):
 #   export ICIO_DATA=/path/to/EMERGING_Broad_Sectors
-#   julia --project=/path/to/ICIO.jl misc/ICIO_decomp.jl
+#   julia --project=/path/to/GlobalValueChains.jl misc/ICIO_decomp.jl
 
 const PKG_ROOT = dirname(@__DIR__)
 
