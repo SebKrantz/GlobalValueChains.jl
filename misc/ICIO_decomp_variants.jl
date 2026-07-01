@@ -99,9 +99,9 @@ keepbil(df) = filter(r -> r.from_region in EXPORTERS && r.to_region in IMPORTERS
 out(name, df) = (CSV.write(joinpath(base, "$(DATA_PREFIX)_$(name).csv"), df); println("  $(name).csv  ($(nrow(df)) rows)"))
 out("GVC_KWW_WS_BM19", w_src)                 # country, world/source (9 terms)
 out("GVC_SEC_SINK_BM19", sec_sink)            # sector, exporter/sink (9 terms)
-out("GVC_SEC_SELF_BM19", sec_self)            # sector, self/sectexp (7 terms)
+out("GVC_SEC_SELF_BM19", sec_self)            # sector, self/sectexp (9 terms)
 out("GVC_BIL_SINK_SAMPLE", keepbil(bil_sink)) # bilateral sample, exporter/sink (10 terms)
-out("GVC_BIL_SELF_SAMPLE", keepbil(bil_self)) # bilateral sample, self/sectbil (7 terms)
+out("GVC_BIL_SELF_SAMPLE", keepbil(bil_self)) # bilateral sample, self/sectbil (9 terms)
 out("GVC_IMP_BM19", imp_cty)                  # imports by country
 
 # ----- optional: diff against Stata references if present -----
