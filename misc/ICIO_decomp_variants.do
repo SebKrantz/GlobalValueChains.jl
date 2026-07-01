@@ -33,10 +33,15 @@ clear
 global exporters CHN DEU USA ZAF IND
 global importers USA CHN DEU NGA
 
+* Set run_full = 1 to (re)generate the slow full sections 1-4 (hundreds of icio calls, hours);
+* set 0 to skip them and only (re)build the quick self-perimeter sample (sections 5-6).
+global run_full 0
+
 icio_clean
 icio_load, iciot(user, userp($csv_path) tablen(${data}_${year}.csv) countrylist(${data}_countrylist.csv))
 qui icio, info
 
+if $run_full {
 * ---------------------------------------------------------------------------
 * 1) Country-level, world / source  (9 terms: GEXP DC DVA VAX REF DDC FC FVA FDC)
 * ---------------------------------------------------------------------------
@@ -168,48 +173,55 @@ foreach ci of global allctry {
 }
 outsheet using "${csv_path}/${data}_GVC_IMP_BM19_STATA.csv", comma replace
 di "Saved EM_GVC_IMP_BM19_STATA.csv"
+}   // end if run_full (sections 1-4)
 
 * ---------------------------------------------------------------------------
-* 5) Sector-level, self (sectexp) perimeter  (9 terms: GEXP DC DVA VAX REF DDC FC FVA FDC)
+* 5) Sector-level, self (sectexp) perimeter (9 terms: GEXP DC DVA VAX REF DDC FC FVA FDC)
+*    icio requires a SPECIFIC export sector for perspective(sectexp), so we loop sectors
+*    (each icio call re-inverts the table -> slow). Restricted to a few exporters.
 * ---------------------------------------------------------------------------
+global selfexp CHN DEU
+global selfimp USA
 clear
-set obs `=$nctry * $nsec'
+local nexp : word count $selfexp
+set obs `=`nexp' * $nsec'
 gen from_region = ""
 gen from_sector = .
 foreach v in gexp dc dva vax ref ddc fc fva fdc {
     gen `v' = .
 }
 local blk = 0
-foreach ce of global allctry {
-    qui icio, exporter(`ce', all) perspective(sectexp) output(detailed)
-    mat res = r(detailed)                       // 9 rows x nsec cols
+foreach ce of global selfexp {
     forvalues sct = 1/$nsec {
+        qui icio, exporter(`ce', `sct') perspective(sectexp) output(detailed)
+        mat res = r(detailed)                   // 9 rows x 1 col
         local row = `blk' * $nsec + `sct'
         qui replace from_region = "`ce'" in `row'
         qui replace from_sector = `sct' in `row'
-        qui replace gexp = res[1,`sct'] in `row'
-        qui replace dc   = res[2,`sct'] in `row'
-        qui replace dva  = res[3,`sct'] in `row'
-        qui replace vax  = res[4,`sct'] in `row'
-        qui replace ref  = res[5,`sct'] in `row'
-        qui replace ddc  = res[6,`sct'] in `row'
-        qui replace fc   = res[7,`sct'] in `row'
-        qui replace fva  = res[8,`sct'] in `row'
-        qui replace fdc  = res[9,`sct'] in `row'
+        qui replace gexp = res[1,1] in `row'
+        qui replace dc   = res[2,1] in `row'
+        qui replace dva  = res[3,1] in `row'
+        qui replace vax  = res[4,1] in `row'
+        qui replace ref  = res[5,1] in `row'
+        qui replace ddc  = res[6,1] in `row'
+        qui replace fc   = res[7,1] in `row'
+        qui replace fva  = res[8,1] in `row'
+        qui replace fdc  = res[9,1] in `row'
     }
     local blk = `blk' + 1
 }
-outsheet using "${csv_path}/${data}_GVC_SEC_SELF_BM19_STATA.csv", comma replace
-di "Saved EM_GVC_SEC_SELF_BM19_STATA.csv"
+outsheet using "${csv_path}/${data}_GVC_SEC_SELF_SAMPLE_STATA.csv", comma replace
+di "Saved EM_GVC_SEC_SELF_SAMPLE_STATA.csv"
 
 * ---------------------------------------------------------------------------
 * 6) Bilateral sector-level, self (sectbil) perimeter (9 terms), sample pairs
-*    row order: GEXP DC DVA VAX REF DDC FC FVA FDC
+*    row order: GEXP DC DVA VAX REF DDC FC FVA FDC. sectbil also needs a specific export
+*    sector -> loop sectors. Small sample ($selfexp x $selfimp).
 * ---------------------------------------------------------------------------
 clear
 local npairs = 0
-foreach ci in $importers {
-    foreach ce in $exporters {
+foreach ci in $selfimp {
+    foreach ce in $selfexp {
         if "`ce'" != "`ci'" local npairs = `npairs' + 1
     }
 }
@@ -221,26 +233,26 @@ foreach v in gexp dc dva vax ref ddc fc fva fdc {
     gen `v' = .
 }
 local iter = 0
-foreach ci in $importers {
-    foreach ce in $exporters {
+foreach ci in $selfimp {
+    foreach ce in $selfexp {
         if "`ce'" == "`ci'" continue
-        qui icio, exporter(`ce', all) importer(`ci') perspective(sectbil) output(detailed)
-        mat res = r(detailed)
         local iter = `iter' + 1
         forvalues sct = 1/$nsec {
+            qui icio, exporter(`ce', `sct') importer(`ci') perspective(sectbil) output(detailed)
+            mat res = r(detailed)               // 9 rows x 1 col
             local row = (`iter'-1)*$nsec + `sct'
             qui replace from_region = "`ce'" in `row'
             qui replace from_sector = `sct' in `row'
             qui replace to_region = "`ci'" in `row'
-            qui replace gexp = res[1,`sct'] in `row'
-            qui replace dc   = res[2,`sct'] in `row'
-            qui replace dva  = res[3,`sct'] in `row'
-            qui replace vax  = res[4,`sct'] in `row'
-            qui replace ref  = res[5,`sct'] in `row'
-            qui replace ddc  = res[6,`sct'] in `row'
-            qui replace fc   = res[7,`sct'] in `row'
-            qui replace fva  = res[8,`sct'] in `row'
-            qui replace fdc  = res[9,`sct'] in `row'
+            qui replace gexp = res[1,1] in `row'
+            qui replace dc   = res[2,1] in `row'
+            qui replace dva  = res[3,1] in `row'
+            qui replace vax  = res[4,1] in `row'
+            qui replace ref  = res[5,1] in `row'
+            qui replace ddc  = res[6,1] in `row'
+            qui replace fc   = res[7,1] in `row'
+            qui replace fva  = res[8,1] in `row'
+            qui replace fdc  = res[9,1] in `row'
         }
     }
 }

@@ -100,7 +100,8 @@ are `gimp va dc` with `gimp = va + dc`.
 
 Every variant has been diffed **directly against Stata `icio`** on the EMERGING 245×18 tables and
 agrees to ≈1e-6 relative (Stata's CSV output precision): world/sink and world/source (country),
-exporter/source and exporter/sink (sector and bilateral, including `vaxim`), and the
+exporter/source and exporter/sink (sector and bilateral, including `vaxim`), the self
+(sectexp/sectbil) perimeter including its `vax`/`ref` split, and the
 importer-perspective imports. The decompositions are exactly additive (bilateral → sector →
 country) and satisfy the Borin-Mancini cross-engine identities to machine precision (summed over
 importers the sink DVA/FVA/VAX/REF equal the source country totals; world/source and world/sink

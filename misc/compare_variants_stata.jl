@@ -71,7 +71,7 @@ compare("imports importer", "$(DATA_PREFIX)_GVC_IMP_BM19_STATA.csv",
 # 5) sector, self (sectexp) perimeter — 9 terms
 secs = decompose(m; level = :sector, perspective = :self)
 secs.from_sector = [SECIDX[s] for s in secs.from_sector]
-compare("sector self (sectexp)", "$(DATA_PREFIX)_GVC_SEC_SELF_BM19_STATA.csv",
+compare("sector self (sectexp)", "$(DATA_PREFIX)_GVC_SEC_SELF_SAMPLE_STATA.csv",
         secs, [:from_region, :from_sector], [:gexp, :dc, :dva, :vax, :ref, :ddc, :fc, :fva, :fdc])
 
 # 6) bilateral, self (sectbil) perimeter (sample) — 9 terms
